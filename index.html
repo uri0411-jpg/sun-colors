@@ -307,12 +307,21 @@ async function loadData() {
     localStorage.removeItem('shakey_last_city'); // GPS used, clear saved city
     await fetchAndRender();
   } catch(e) {
+    console.warn('GPS error:', e.message, e.code);
     document.getElementById('locationName').textContent = 'GPS לא זמין';
     document.getElementById('locationCoords').textContent = 'חפש עיר ידנית למטה';
+
+    // Check if it's a permissions issue
+    const isPermissionDenied = e.message?.includes('מיקום') || e.code === 1;
+    const extraMsg = isPermissionDenied
+      ? 'לאפשר מיקום: הגדרות ← אפליקציות ← שחקי אור ← הרשאות ← מיקום'
+      : 'כרום חוסם GPS מקבצים מקומיים.';
+
     document.getElementById('content').innerHTML = `
       <div class="error-box" style="border-color:rgba(232,184,109,0.3);background:rgba(232,184,109,0.07)">
-        <h3 style="color:var(--gold)">📍 לא ניתן לאתר מיקום אוטומטית</h3>
-        <p>כרום חוסם GPS מקבצים מקומיים.<br>הקלד עיר בתיבת החיפוש למעלה.</p>
+        <h3 style="color:var(--gold)">📍 לא ניתן לאתר מיקום</h3>
+        <p>${extraMsg}<br><br>או חפש עיר בתיבת החיפוש למעלה 👆</p>
+        <button class="btn-primary" style="margin-top:12px" onclick="retryGPS()">🔄 נסה שוב GPS</button>
       </div>`;
     setTimeout(() => { const inp=document.getElementById('cityInput'); if(inp){inp.focus();inp.scrollIntoView({behavior:'smooth',block:'center'});} }, 300);
   }
@@ -327,6 +336,18 @@ function getLocation() {
       else rej(new Error('לא ניתן לאתר מיקום'));
     }, {timeout:10000});
   });
+}
+
+// ── Retry GPS with permission prompt ──
+async function retryGPS() {
+  // Try to explicitly trigger permission prompt
+  if (navigator.permissions) {
+    try {
+      const result = await navigator.permissions.query({name:'geolocation'});
+      console.log('Geolocation permission state:', result.state);
+    } catch(e) {}
+  }
+  loadData();
 }
 
 // ── City search ──

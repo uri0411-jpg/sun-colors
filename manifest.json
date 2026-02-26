@@ -9,6 +9,7 @@
   "theme_color": "#0a0814",
   "lang": "he",
   "dir": "rtl",
+  "permissions": ["geolocation"],
   "icons": [
     {
       "src": "icon-192.png",
