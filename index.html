@@ -829,15 +829,16 @@ async function searchCity() {
 }
 
 async function shareApp() {
+  const APK_LINK = 'https://drive.google.com/file/d/1lGmM9w8B71dgePXFh79aXFIVaLEZL9X5/view?usp=sharing';
   const shareData = {
-    title: 'שחקי אור — תחזית שקיעות',
-    text: '📲 גלה כמה צבעוניות יהיו השקיעות והזריחות הקרובות!',
-    url: window.location.href
+    title: 'שחקי אור — תחזית שקיעות וזריחות',
+    text: '🌅 גלה כמה צבעוניות יהיו השקיעות והזריחות הקרובות!\nהורד את האפליקציה:',
+    url: APK_LINK
   };
   try {
     if (navigator.share) await navigator.share(shareData);
     else {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(APK_LINK);
       alert('הקישור הועתק! שלח לחברים 🌅');
     }
   } catch {}
