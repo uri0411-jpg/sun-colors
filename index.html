@@ -246,7 +246,7 @@ footer { text-align:center; margin-top:32px; font-size:11px; color:rgba(240,232,
 
   <footer>
     נתוני מזג אוויר: Open-Meteo • שמש: sunrise-sunset.org<br>
-    שחקי אור © 2025
+    שחקי אור © 2026
   </footer>
 </div>
 
@@ -285,7 +285,14 @@ function init() {
     document.getElementById('notifBtn').textContent = 'פעיל ✓';
     document.getElementById('notifBtn').classList.remove('off');
   }
-  loadData();
+  // Auto-load only if previously used a city (saved in localStorage)
+  const lastCity = localStorage.getItem('shakey_last_city');
+  if (lastCity) {
+    document.getElementById('cityInput').value = lastCity;
+    searchCity();
+  } else {
+    loadData(); // try GPS
+  }
 }
 
 // ── GPS ──
@@ -297,6 +304,7 @@ async function loadData() {
     const pos = await getLocation();
     userLat = pos.coords.latitude;
     userLon = pos.coords.longitude;
+    localStorage.removeItem('shakey_last_city'); // GPS used, clear saved city
     await fetchAndRender();
   } catch(e) {
     document.getElementById('locationName').textContent = 'GPS לא זמין';
@@ -334,6 +342,7 @@ async function searchCity() {
     userLat = parseFloat(data[0].lat);
     userLon = parseFloat(data[0].lon);
     currentCityName = data[0].display_name.split(',')[0];
+    localStorage.setItem('shakey_last_city', query); // remember for next launch
     document.getElementById('locationName').textContent = currentCityName;
     document.getElementById('locationCoords').textContent = `${userLat.toFixed(4)}°, ${userLon.toFixed(4)}°`;
     document.getElementById('content').innerHTML = `<div class="loading"><span class="loading-spinner">🌤️</span><p>מוריד תחזית...</p></div>`;
@@ -345,14 +354,16 @@ async function searchCity() {
 
 // ── Fetch + render ──
 async function fetchAndRender() {
-  const [weatherData, sunData] = await Promise.all([
+  const [weatherData, sunData, aqData, elevData] = await Promise.all([
     fetchWeather(userLat, userLon),
-    fetchSunTimes(userLat, userLon)
+    fetchSunTimes(userLat, userLon),
+    fetchAirQuality(userLat, userLon),
+    fetchElevation(userLat, userLon)
   ]);
   currentWeatherData = weatherData;
   currentSunData = sunData;
   worldLoaded = false; // reset so world tab refreshes
-  renderCards(weatherData, sunData);
+  renderCards(weatherData, sunData, aqData, elevData);
   document.getElementById('shareSection').style.display='block';
   if (notifEnabled) scheduleNotifications(sunData, weatherData);
 }
@@ -367,6 +378,41 @@ async function fetchWeather(lat, lon) {
   } catch(e) {
     console.warn('Weather API failed:', e.message);
     return null;
+  }
+}
+
+// ── Air quality / dust API (Open-Meteo AQI) ──
+async function fetchAirQuality(lat, lon) {
+  const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=dust,aerosol_optical_depth,pm10&timezone=auto&forecast_days=3`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch(e) {
+    console.warn('Air quality API failed:', e.message);
+    return null;
+  }
+}
+
+// ── Elevation API — check horizon obstruction ──
+async function fetchElevation(lat, lon) {
+  // Get elevation at user location + nearby points to estimate horizon
+  const offsets = [0.1, -0.1]; // ~11km north/south
+  try {
+    const lats = [lat, ...offsets.map(o => parseFloat((lat+o).toFixed(4)))];
+    const lons = [lon, lon, lon];
+    const url = `https://api.open-meteo.com/v1/elevation?latitude=${lats.join(',')}&longitude=${lons.join(',')}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const elevations = data.elevation;
+    const myElev = elevations[0];
+    const maxNearby = Math.max(...elevations.slice(1));
+    // Horizon obstruction score: how much higher is surrounding terrain
+    const obstruction = Math.max(0, maxNearby - myElev);
+    return { myElev, obstruction };
+  } catch {
+    return { myElev: 0, obstruction: 0 };
   }
 }
 
@@ -407,20 +453,73 @@ function getHourlyIndex(data, targetDateStr, targetHour) {
 }
 
 // ── Score calculation ──
-function calcColorScore(cloudCover, humidity, rain, windspeed) {
+function calcColorScore(cloudCover, humidity, rain, windspeed, dust=0, aod=0, horizonObstruction=0) {
   let score = 5;
-  if (cloudCover < 10) score -= 1;
-  else if (cloudCover <= 40) score += 3;
-  else if (cloudCover <= 60) score += 1.5;
-  else if (cloudCover <= 80) score -= 1;
-  else score -= 3;
-  if (rain > 5) score -= 2;
-  else if (rain > 1) score -= 1;
-  else if (rain===0 && cloudCover>20 && cloudCover<60) score += 0.5;
-  if (humidity>40 && humidity<70) score += 0.5;
-  else if (humidity>80) score -= 0.5;
-  if (windspeed>30) score += 0.5;
+
+  // Cloud cover — sweet spot 20-50%
+  if (cloudCover < 5) score -= 1.5;       // crystal clear, less drama
+  else if (cloudCover < 10) score -= 0.5;
+  else if (cloudCover <= 35) score += 3;
+  else if (cloudCover <= 55) score += 1.5;
+  else if (cloudCover <= 75) score -= 1;
+  else score -= 3;                         // overcast
+
+  // Rain
+  if (rain > 5) score -= 2.5;
+  else if (rain > 1) score -= 1.5;
+  else if (rain > 0.2) score -= 0.5;
+  else if (rain === 0 && cloudCover > 15 && cloudCover < 55) score += 0.5;
+
+  // Humidity — moderate is good (scatters light beautifully)
+  if (humidity >= 35 && humidity <= 65) score += 0.5;
+  else if (humidity > 85) score -= 0.5;
+
+  // Wind — clears air of fog/smog
+  if (windspeed > 40) score += 0.5;
+  else if (windspeed < 5 && humidity > 70) score -= 0.3; // stagnant humid = hazy
+
+  // 🌫️ Dust / aerosols — Israeli desert dust ADDS warm red/orange tones!
+  // Low dust: neutral. Medium dust (50-200μg): adds reds (+bonus). Heavy dust (>500): obscures (-penalty)
+  if (dust > 0) {
+    if (dust < 30) score += 0;           // clean air
+    else if (dust < 100) score += 0.8;   // light dust — warm glow
+    else if (dust < 300) score += 1.5;   // medium dust — spectacular reds!
+    else if (dust < 600) score += 0.5;   // heavy dust — still colorful but hazy
+    else score -= 1.5;                   // severe dust storm — blocks sun
+  }
+
+  // Aerosol Optical Depth — higher = more scattering = warmer colors (up to a point)
+  if (aod > 0) {
+    if (aod < 0.1) score += 0;
+    else if (aod < 0.3) score += 0.5;
+    else if (aod < 0.6) score += 1.0;
+    else if (aod < 1.0) score += 0.3;
+    else score -= 1.0;  // very thick aerosol hides sun
+  }
+
+  // 🏔️ Horizon obstruction — mountains/buildings block sunset view
+  if (horizonObstruction > 200) score -= 1.5;
+  else if (horizonObstruction > 100) score -= 0.8;
+  else if (horizonObstruction > 50) score -= 0.3;
+  // Elevated location with clear horizon is a bonus
+  else if (horizonObstruction < 10) score += 0.2;
+
   return Math.min(10, Math.max(1, Math.round(score*10)/10));
+}
+
+function getDustLabel(dust) {
+  if (!dust || dust < 30) return null;
+  if (dust < 100) return {text:'🌫️ אבק קל — צפה לצבעים חמים', color:'#e8b86d'};
+  if (dust < 300) return {text:'🌫️ אבק מדברי — שקיעה מהממת!', color:'#ff9a44'};
+  if (dust < 600) return {text:'🌫️ אבק כבד — צבעים עזים אך עכורים', color:'#ff7b54'};
+  return {text:'🌪️ סופת אבק — ראות נמוכה', color:'#d4607a'};
+}
+
+function getHorizonLabel(obstruction) {
+  if (obstruction < 10) return null;
+  if (obstruction < 50) return {text:'⛰️ שטח שטוח — אופק פתוח', color:'#6ab0d4'};
+  if (obstruction < 150) return {text:'⛰️ גבהים מתונים ברקע', color:'#87ceeb'};
+  return {text:'🏔️ הרים גבוהים עלולים לחסום', color:'#9ca3af'};
 }
 
 function getQualityInfo(score) {
@@ -457,7 +556,7 @@ function weatherCodeToText(code) {
 }
 
 // ── Render forecast cards ──
-function renderCards(weatherData, sunData) {
+function renderCards(weatherData, sunData, aqData=null, elevData=null) {
   const today = new Date();
   let html = '<div id="dayCards">';
 
@@ -499,8 +598,24 @@ function renderCards(weatherData, sunData) {
       rain    = weatherData.daily.precipitation_sum?.[i]?.toFixed(1) ?? '--';
     }
 
-    const sunriseScore  = calcColorScore(srCloud, srHumidity, srRain, srWind);
-    const ssScoreClamped = calcColorScore(ssCloud, ssHumidity, ssRain, ssWind);
+    // Extract dust & AOD at sunrise/sunset hours
+    let srDust=0, srAod=0, ssDust=0, ssAod=0;
+    if (aqData?.hourly) {
+      const srAqIdx = aqData.hourly?.time ? getHourlyIndex(aqData, dateStr, srHour) : 0;
+      const ssAqIdx = aqData.hourly?.time ? getHourlyIndex(aqData, dateStr, ssHour) : 0;
+      srDust = aqData.hourly.dust?.[srAqIdx] ?? 0;
+      srAod  = aqData.hourly.aerosol_optical_depth?.[srAqIdx] ?? 0;
+      ssDust = aqData.hourly.dust?.[ssAqIdx] ?? 0;
+      ssAod  = aqData.hourly.aerosol_optical_depth?.[ssAqIdx] ?? 0;
+    }
+    const horizonObs = elevData?.obstruction ?? 0;
+    const myElev = elevData?.myElev ?? 0;
+
+    const sunriseScore   = calcColorScore(srCloud, srHumidity, srRain, srWind, srDust, srAod, horizonObs);
+    const ssScoreClamped = calcColorScore(ssCloud, ssHumidity, ssRain, ssWind, ssDust, ssAod, horizonObs);
+
+    const dustLabel    = getDustLabel(Math.max(srDust, ssDust));
+    const horizonLabel = getHorizonLabel(horizonObs);
     const srQ = getQualityInfo(sunriseScore);
     const ssQ = getQualityInfo(ssScoreClamped);
     const sunrise = sunData[i] ? formatLocalTime(sunData[i].sunrise) : '--:--';
@@ -526,7 +641,7 @@ function renderCards(weatherData, sunData) {
     const entryId = `${dateStr}-${i}`;
     const journal = loadJournal();
     const existing = journal.find(e => e.id===entryId);
-    const savedRatingHtml = existing ? `<div class="rating-saved" style="display:block">✓ דירגת ${existing.actualRating}★</div>` : '';
+    // savedRatingHtml handled inline in rating-saved div below
 
     html += `
     <div class="day-card" style="animation-delay:${i*0.12}s">
@@ -569,6 +684,9 @@ function renderCards(weatherData, sunData) {
           <div class="weather-item"><span class="weather-item-icon">💦</span><div class="weather-item-text"><strong>${srHumidity}%</strong>לחות</div></div>
         </div>
         ${hourlyHtml ? `<div class="hourly-strip">${hourlyHtml}</div>` : ''}
+        ${dustLabel ? `<div style="margin-top:10px;padding:8px 12px;border-radius:10px;background:rgba(255,154,68,0.1);border:1px solid rgba(255,154,68,0.25);font-size:12px;color:${dustLabel.color};font-weight:600">${dustLabel.text}</div>` : ''}
+        ${horizonLabel ? `<div style="margin-top:6px;padding:8px 12px;border-radius:10px;background:rgba(106,176,212,0.08);border:1px solid rgba(106,176,212,0.2);font-size:12px;color:${horizonLabel.color};font-weight:600">${horizonLabel.text}</div>` : ''}
+        ${myElev > 0 ? `<div style="margin-top:6px;font-size:11px;color:var(--muted)">📐 גובה מיקומך: ${myElev.toFixed(0)} מטר מעל פני הים</div>` : ''}
       </div>
 
       <!-- Rating row -->
@@ -672,9 +790,12 @@ async function renderWorld() {
       if (w?.hourly) {
         const ssIdx = getHourlyIndex(w, today, ssHour);
         score = calcColorScore(w.hourly.cloudcover[ssIdx]??40, w.hourly.relativehumidity_2m[ssIdx]??55, w.hourly.precipitation[ssIdx]??0, w.hourly.windspeed_10m[ssIdx]??15);
+        // Note: no dust/elevation for world spots (would require extra API calls per spot)
       }
-      return {...spot, score, sunset: sunsetUTC ? formatLocalTime(sunsetUTC) : '--:--'};
-    } catch { return {...spot, score:5, sunset:'--:--'}; }
+      // sunset-sunset.org returns UTC; formatLocalTime converts to browser timezone (not spot's timezone)
+      const sunsetLocal = sunsetUTC ? new Date(sunsetUTC).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'UTC'}) + ' UTC' : '--:--';
+      return {...spot, score, sunset: sunsetLocal};
+    } catch(err) { console.warn('World spot fetch failed:', err); return {...spot, score:5, sunset:'--:--'}; }
   }));
 
   results.sort((a,b) => b.score-a.score);
@@ -749,7 +870,7 @@ function scheduleNotifications(sunData, weatherData) {
         const delay = notifTime - now;
         const t = setTimeout(() => {
           new Notification(`🌅 שחקי אור — ${label} מדהימה בעוד שעה!`, {
-            body: `ציון צבעוניות: ${score}/10 — ${getQualityInfo(score).label}\nצא לצפות! ${formatLocalTime(utc)}`,
+            body: `ציון צבעוניות: ${score}/10 | ${getQualityInfo(score).label} | צא לצפות! ${formatLocalTime(utc)}`,
             icon: 'icon-192.png'
           });
         }, delay);
