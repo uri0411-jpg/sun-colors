@@ -585,7 +585,7 @@ function getLocation() {
 }
 
 async function fetchWeather(lat, lon) {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,cloudcover_mean,precipitation_sum,windspeed_10m_max,relativehumidity_2m_max&timezone=auto&forecast_days=3`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=cloudcover,relativehumidity_2m,precipitation,windspeed_10m,weathercode&daily=weathercode,precipitation_sum&timezone=auto&forecast_days=3`;
   console.log('Fetching weather:', url);
   try {
     const res = await fetch(url);
@@ -595,17 +595,17 @@ async function fetchWeather(lat, lon) {
     return data;
   } catch (e) {
     console.warn('Weather API failed, using fallback data:', e.message);
-    // Fallback so app still works when network is blocked
-    return {
-      daily: {
-        weathercode: [1, 2, 3],
-        cloudcover_mean: [35, 55, 65],
-        precipitation_sum: [0, 0, 1.2],
-        windspeed_10m_max: [14, 18, 22],
-        relativehumidity_2m_max: [52, 58, 68]
-      }
-    };
+    return null; // will use fallback in renderCards
   }
+}
+
+function getHourlyIndex(data, targetDateStr, targetHour) {
+  // Find the index in hourly data closest to the given date+hour
+  const times = data.hourly.time;
+  const target = `${targetDateStr}T${String(targetHour).padStart(2,'0')}:00`;
+  let idx = times.findIndex(t => t === target);
+  if (idx === -1) idx = times.findIndex(t => t.startsWith(targetDateStr));
+  return idx >= 0 ? idx : 0;
 }
 
 async function fetchSunTimes(lat, lon) {
@@ -712,17 +712,40 @@ function renderCards(weatherData, sunData) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
     const dayName = i === 0 ? 'היום' : i === 1 ? 'מחר' : `יום ${DAYS_HE[d.getDay()]}`;
-    const dateStr = `${d.getDate()} ב${MONTHS_HE[d.getMonth()]}`;
+    const dateStrDisplay = `${d.getDate()} ב${MONTHS_HE[d.getMonth()]}`;
+    const dateStr = d.toISOString().split('T')[0];
+    const wCode = weatherData?.daily?.weathercode?.[i] ?? 1;
 
-    const cloud = weatherData.daily.cloudcover_mean[i];
-    const humidity = weatherData.daily.relativehumidity_2m_max[i];
-    const rain = weatherData.daily.precipitation_sum[i];
-    const wind = weatherData.daily.windspeed_10m_max[i];
-    const wCode = weatherData.daily.weathercode[i];
+    // Get sunrise/sunset hours for precise hourly lookup
+    const sunriseUTC = sunData[i]?.sunrise;
+    const sunsetUTC = sunData[i]?.sunset;
+    const srHour = sunriseUTC ? new Date(sunriseUTC).getHours() : 6;
+    const ssHour = sunsetUTC ? new Date(sunsetUTC).getHours() : 19;
 
-    const sunriseScore = calcColorScore(cloud, humidity, rain, wind);
-    const sunsetScore = calcColorScore(cloud, humidity, rain, wind) + (Math.random() * 0.8 - 0.4);
-    const ssScoreClamped = Math.min(10, Math.max(1, Math.round(sunsetScore * 10) / 10));
+    // Extract hourly data at the exact sunrise/sunset hour
+    let srCloud, srHumidity, srRain, srWind;
+    let ssCloud, ssHumidity, ssRain, ssWind;
+
+    if (weatherData?.hourly) {
+      const srIdx = getHourlyIndex(weatherData, dateStr, srHour);
+      const ssIdx = getHourlyIndex(weatherData, dateStr, ssHour);
+      srCloud    = weatherData.hourly.cloudcover[srIdx] ?? 40;
+      srHumidity = weatherData.hourly.relativehumidity_2m[srIdx] ?? 55;
+      srRain     = weatherData.hourly.precipitation[srIdx] ?? 0;
+      srWind     = weatherData.hourly.windspeed_10m[srIdx] ?? 15;
+      ssCloud    = weatherData.hourly.cloudcover[ssIdx] ?? 40;
+      ssHumidity = weatherData.hourly.relativehumidity_2m[ssIdx] ?? 55;
+      ssRain     = weatherData.hourly.precipitation[ssIdx] ?? 0;
+      ssWind     = weatherData.hourly.windspeed_10m[ssIdx] ?? 15;
+    } else {
+      // Fallback values
+      srCloud = ssCloud = 40; srHumidity = ssHumidity = 55;
+      srRain = ssRain = 0; srWind = ssWind = 15;
+    }
+
+    const sunriseScore = calcColorScore(srCloud, srHumidity, srRain, srWind);
+    const ssScoreClamped = calcColorScore(ssCloud, ssHumidity, ssRain, ssWind);
+    const humidity = srHumidity; // for display
 
     const srQ = getQualityInfo(sunriseScore);
     const ssQ = getQualityInfo(ssScoreClamped);
@@ -741,7 +764,7 @@ function renderCards(weatherData, sunData) {
         <div class="day-header">
           <div>
             <div class="day-name">${dayName}</div>
-            <div class="day-date">${dateStr}</div>
+            <div class="day-date">${dateStrDisplay}</div>
           </div>
           <div class="weather-summary">
             <span>${weatherCodeToEmoji(wCode)}</span>
