@@ -285,14 +285,8 @@ function init() {
     document.getElementById('notifBtn').textContent = 'פעיל ✓';
     document.getElementById('notifBtn').classList.remove('off');
   }
-  // Auto-load only if previously used a city (saved in localStorage)
-  const lastCity = localStorage.getItem('shakey_last_city');
-  if (lastCity) {
-    document.getElementById('cityInput').value = lastCity;
-    searchCity();
-  } else {
-    loadData(); // try GPS
-  }
+  // Always try GPS first — if it fails, fall back to last searched city
+  loadData();
 }
 
 // ── GPS ──
@@ -323,7 +317,14 @@ async function loadData() {
         <p>${extraMsg}<br><br>או חפש עיר בתיבת החיפוש למעלה 👆</p>
         <button class="btn-primary" style="margin-top:12px" onclick="retryGPS()">🔄 נסה שוב GPS</button>
       </div>`;
-    setTimeout(() => { const inp=document.getElementById('cityInput'); if(inp){inp.focus();inp.scrollIntoView({behavior:'smooth',block:'center'});} }, 300);
+    // Auto-load last city if available
+    const lastCity = localStorage.getItem('shakey_last_city');
+    if (lastCity) {
+      document.getElementById('cityInput').value = lastCity;
+      setTimeout(() => searchCity(), 500);
+    } else {
+      setTimeout(() => { const inp=document.getElementById('cityInput'); if(inp){inp.focus();inp.scrollIntoView({behavior:'smooth',block:'center'});} }, 300);
+    }
   }
   btn.disabled = false; btn.textContent = 'GPS';
 }
@@ -334,7 +335,11 @@ function getLocation() {
     navigator.geolocation.getCurrentPosition(res, (e) => {
       if (e.code===1) rej(new Error('נא לאפשר גישה למיקום'));
       else rej(new Error('לא ניתן לאתר מיקום'));
-    }, {timeout:10000});
+    }, {
+      enableHighAccuracy: true,
+      timeout: 20000,        // longer for Android WebView
+      maximumAge: 60000      // accept cached position up to 1 min old
+    });
   });
 }
 
