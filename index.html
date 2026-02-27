@@ -3,186 +3,422 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="theme-color" content="#0d0a1a">
+<meta name="theme-color" content="#07040f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>שחקי אור — תחזית שקיעות וזריחות</title>
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Heebo:wght@300;400;600&display=swap" rel="stylesheet">
+
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Heebo:wght@300;400;500;600&display=swap');
+
 :root {
-  --bg: #0a0814;
-  --surface: rgba(255,255,255,0.04);
-  --border: rgba(255,255,255,0.08);
-  --text: #f0e8d8;
-  --muted: rgba(240,232,216,0.5);
-  --gold: #e8b86d;
-  --rose: #d4607a;
-  --sky: #6ab0d4;
-  --green: #5cb85c;
+  --bg: #07040f;
+  --surface: rgba(255,255,255,0.038);
+  --border: rgba(255,185,80,0.12);
+  --border-lit: rgba(255,185,80,0.28);
+  --text: #f4e8d4;
+  --muted: rgba(244,232,212,0.42);
+  --gold: #f0b84a;
+  --gold2: #ffd46a;
+  --rose: #e04868;
+  --sky: #5aaed4;
+  --green: #4ec870;
+  --amber: #ff9030;
 }
+
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Heebo',sans-serif; background:var(--bg); color:var(--text); min-height:100dvh; overflow-x:hidden; }
+
+body {
+  font-family:'Heebo',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100dvh;
+  overflow-x:hidden;
+}
+
+/* ── Deep night sky ── */
 body::before {
   content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
   background:
-    radial-gradient(ellipse 120% 60% at 50% 0%, rgba(212,96,122,0.15) 0%, transparent 60%),
-    radial-gradient(ellipse 80% 40% at 80% 100%, rgba(232,184,109,0.1) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 30% at 20% 80%, rgba(106,176,212,0.08) 0%, transparent 50%);
+    radial-gradient(ellipse 150% 55% at 50% -5%,  rgba(200,60,100,0.17) 0%, transparent 55%),
+    radial-gradient(ellipse 100% 50% at 90% 110%, rgba(240,165,50,0.13) 0%, transparent 50%),
+    radial-gradient(ellipse  70% 35% at  8% 85%,  rgba(60,110,220,0.09) 0%, transparent 50%),
+    radial-gradient(ellipse  60% 40% at 55% 45%,  rgba(100,40,160,0.05) 0%, transparent 60%);
 }
+
+/* ── Stars ── */
 body::after {
   content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
   background-image:
-    radial-gradient(1px 1px at 15% 10%, rgba(255,255,255,0.6) 0%, transparent 100%),
-    radial-gradient(1px 1px at 35% 5%, rgba(255,255,255,0.4) 0%, transparent 100%),
-    radial-gradient(1px 1px at 55% 15%, rgba(255,255,255,0.5) 0%, transparent 100%),
-    radial-gradient(1px 1px at 72% 8%, rgba(255,255,255,0.3) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 45% 3%, rgba(255,255,255,0.8) 0%, transparent 100%);
+    radial-gradient(1.8px 1.8px at  7%  5%, rgba(255,255,255,0.95) 0%,transparent 100%),
+    radial-gradient(1.2px 1.2px at 20%  3%, rgba(255,255,255,0.55) 0%,transparent 100%),
+    radial-gradient(2.2px 2.2px at 37%  8%, rgba(255,230,170,0.80) 0%,transparent 100%),
+    radial-gradient(1.0px 1.0px at 51%  2%, rgba(255,255,255,0.45) 0%,transparent 100%),
+    radial-gradient(1.8px 1.8px at 66%  6%, rgba(255,255,255,0.75) 0%,transparent 100%),
+    radial-gradient(1.2px 1.2px at 80%  1%, rgba(190,220,255,0.65) 0%,transparent 100%),
+    radial-gradient(2.4px 2.4px at 93% 10%, rgba(255,255,255,0.90) 0%,transparent 100%),
+    radial-gradient(1.0px 1.0px at  2% 16%, rgba(255,255,255,0.40) 0%,transparent 100%),
+    radial-gradient(1.5px 1.5px at 46%  0%, rgba(255,255,255,0.85) 0%,transparent 100%),
+    radial-gradient(1.0px 1.0px at 14% 13%, rgba(255,255,255,0.35) 0%,transparent 100%),
+    radial-gradient(1.3px 1.3px at 86% 15%, rgba(200,215,255,0.55) 0%,transparent 100%),
+    radial-gradient(1.0px 1.0px at 73% 11%, rgba(255,245,200,0.50) 0%,transparent 100%);
 }
 
 /* ── Layout ── */
-.container { position:relative; z-index:1; max-width:480px; margin:0 auto; padding:24px 16px 40px; }
+.container { position:relative; z-index:1; max-width:480px; margin:0 auto; padding:20px 16px 52px; }
 
-/* ── Header ── */
-header { text-align:center; padding:28px 0 20px; }
-.logo-icon { font-size:48px; display:block; margin-bottom:8px; filter:drop-shadow(0 0 20px rgba(232,184,109,0.5)); animation:float 4s ease-in-out infinite; }
-@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
-h1 { font-family:'Playfair Display',serif; font-size:28px; font-weight:700; margin-bottom:4px; }
-.tagline { font-size:13px; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase; }
+/* ══ HEADER ══ */
+header { text-align:center; padding:32px 0 22px; }
 
-/* ── Tabs ── */
-.tabs { display:flex; gap:6px; margin:18px 0 14px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:4px; }
-.tab { flex:1; text-align:center; padding:8px 4px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; color:var(--muted); border:none; background:none; font-family:'Heebo',sans-serif; }
-.tab.active { background:rgba(232,184,109,0.18); color:var(--gold); }
+.logo-wrap { position:relative; display:inline-block; margin-bottom:14px; }
+.logo-svg  {
+  width:86px; height:86px; display:block;
+  filter: drop-shadow(0 0 18px rgba(240,165,50,0.75))
+          drop-shadow(0 0 40px rgba(200,60,100,0.45));
+  animation: float 5s ease-in-out infinite;
+}
+.logo-glow {
+  position:absolute; inset:-24px; border-radius:50%;
+  background:radial-gradient(circle, rgba(240,165,50,0.18) 0%, transparent 68%);
+  animation:glow-pulse 3.5s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes float      { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-9px) rotate(1deg)} }
+@keyframes glow-pulse { 0%,100%{opacity:0.5;transform:scale(1)} 50%{opacity:1;transform:scale(1.12)} }
 
-/* ── Location ── */
-.location-bar { display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 16px; margin-bottom:10px; cursor:pointer; transition:background 0.2s; }
-.location-bar:hover { background:rgba(255,255,255,0.07); }
-.location-icon { font-size:18px; }
-.location-text { flex:1; font-size:14px; color:var(--muted); }
-.location-text strong { display:block; color:var(--text); font-size:15px; font-weight:600; }
-.refresh-btn { background:rgba(232,184,109,0.15); border:1px solid rgba(232,184,109,0.3); border-radius:8px; color:var(--gold); font-size:12px; padding:6px 12px; cursor:pointer; font-family:'Heebo',sans-serif; transition:all 0.2s; }
-.refresh-btn:hover { background:rgba(232,184,109,0.25); }
-.refresh-btn:disabled { opacity:0.5; cursor:not-allowed; }
+h1 {
+  font-family:'Cormorant Garamond',serif;
+  font-size:38px; font-weight:600; letter-spacing:0.05em;
+  background:linear-gradient(140deg,#ffd46a 0%,#f09030 42%,#e04868 100%);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  margin-bottom:6px;
+}
+.tagline {
+  font-size:10.5px; color:var(--muted);
+  letter-spacing:0.20em; text-transform:uppercase; font-weight:300;
+}
+.header-line {
+  width:56px; height:1px; margin:14px auto 0;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
 
-/* ── City search ── */
-.city-search-row { display:flex; gap:8px; margin-bottom:18px; }
-.city-input { flex:1; background:var(--surface); border:1px solid var(--border); border-radius:12px; color:var(--text); font-family:'Heebo',sans-serif; font-size:14px; padding:12px 16px; outline:none; transition:border-color 0.2s; direction:rtl; }
+/* ══ TABS ══ */
+.tabs {
+  display:flex; gap:4px; margin:16px 0 14px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--border); border-radius:16px; padding:4px;
+  backdrop-filter:blur(16px);
+}
+.tab {
+  flex:1; text-align:center; padding:9px 4px; border-radius:11px;
+  font-size:13px; font-weight:500; cursor:pointer;
+  transition:all 0.25s cubic-bezier(.4,0,.2,1);
+  color:var(--muted); border:none; background:none;
+  font-family:'Heebo',sans-serif;
+}
+.tab.active {
+  background:linear-gradient(135deg,rgba(240,180,60,0.22),rgba(200,60,100,0.14));
+  color:var(--gold2);
+  box-shadow:inset 0 0 0 1px rgba(240,180,60,0.22), 0 2px 10px rgba(240,165,50,0.12);
+}
+
+/* ══ LOCATION ══ */
+.location-bar {
+  display:flex; align-items:center; gap:10px;
+  background:linear-gradient(135deg,rgba(255,185,80,0.055),rgba(200,60,100,0.028));
+  border:1px solid var(--border); border-radius:14px;
+  padding:13px 16px; margin-bottom:10px; cursor:pointer;
+  transition:all 0.25s; backdrop-filter:blur(16px);
+}
+.location-bar:hover { border-color:var(--border-lit); background:rgba(255,255,255,0.055); }
+.location-icon { font-size:20px; }
+.location-text { flex:1; }
+.location-text strong { display:block; color:var(--text); font-size:15px; font-weight:600; margin-bottom:1px; }
+.location-text span   { font-size:12px; color:var(--muted); }
+.refresh-btn {
+  background:linear-gradient(135deg,rgba(240,180,60,0.22),rgba(240,165,50,0.12));
+  border:1px solid rgba(240,180,60,0.32); border-radius:8px;
+  color:var(--gold2); font-size:11px; font-weight:600; letter-spacing:0.06em;
+  padding:6px 14px; cursor:pointer; font-family:'Heebo',sans-serif; transition:all 0.2s;
+}
+.refresh-btn:hover { background:rgba(240,180,60,0.32); box-shadow:0 0 14px rgba(240,165,50,0.22); }
+.refresh-btn:disabled { opacity:0.38; cursor:not-allowed; }
+
+/* ══ CITY SEARCH ══ */
+.city-search-row { display:flex; gap:8px; margin-bottom:16px; }
+.city-input {
+  flex:1; background:rgba(255,255,255,0.028); border:1px solid var(--border);
+  border-radius:12px; color:var(--text); font-family:'Heebo',sans-serif;
+  font-size:14px; padding:12px 16px; outline:none; transition:all 0.25s; direction:rtl;
+}
 .city-input::placeholder { color:var(--muted); }
-.city-input:focus { border-color:rgba(232,184,109,0.5); }
-.city-search-btn { background:var(--surface); border:1px solid var(--border); border-radius:12px; color:var(--text); font-size:18px; padding:0 16px; cursor:pointer; transition:background 0.2s; }
-.city-search-btn:hover { background:rgba(255,255,255,0.08); }
+.city-input:focus { border-color:rgba(240,180,60,0.44); background:rgba(240,180,60,0.04); box-shadow:0 0 0 3px rgba(240,165,50,0.09); }
+.city-search-btn {
+  background:rgba(255,255,255,0.035); border:1px solid var(--border);
+  border-radius:12px; color:var(--muted); font-size:18px;
+  padding:0 16px; cursor:pointer; transition:all 0.2s;
+}
+.city-search-btn:hover { background:rgba(255,255,255,0.08); color:var(--text); border-color:var(--border-lit); }
 
-/* ── Day cards ── */
-.day-card { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:20px; margin-bottom:14px; backdrop-filter:blur(10px); animation:slideUp 0.4s ease both; }
-@keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-.day-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
-.day-name { font-family:'Playfair Display',serif; font-size:20px; font-weight:700; }
-.day-date { font-size:12px; color:var(--muted); }
-.weather-summary { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--muted); }
+/* ══ DAY CARDS ══ */
+.day-card {
+  background:linear-gradient(150deg,rgba(255,255,255,0.048) 0%,rgba(255,255,255,0.018) 100%);
+  border:1px solid var(--border); border-radius:22px;
+  padding:20px; margin-bottom:16px;
+  backdrop-filter:blur(24px);
+  animation:slideUp 0.55s cubic-bezier(.22,1,.36,1) both;
+  box-shadow:0 6px 28px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.065);
+}
+.day-card.today {
+  border-color:rgba(240,165,50,0.22);
+  box-shadow:0 6px 28px rgba(0,0,0,0.32), 0 0 0 1px rgba(240,165,50,0.1), inset 0 1px 0 rgba(255,255,255,0.07);
+}
+@keyframes slideUp { from{opacity:0;transform:translateY(26px) scale(0.975)} to{opacity:1;transform:none} }
 
-/* ── Sun events ── */
+.day-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; }
+.day-name {
+  font-family:'Cormorant Garamond',serif; font-size:24px; font-weight:600; letter-spacing:0.03em;
+  background:linear-gradient(120deg,var(--text) 0%,var(--gold) 100%);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+}
+.day-date { font-size:11px; color:var(--muted); margin-top:3px; letter-spacing:0.05em; }
+.weather-summary {
+  display:flex; align-items:center; gap:5px; font-size:11.5px; color:var(--muted);
+  background:rgba(255,255,255,0.045); border:1px solid var(--border);
+  border-radius:8px; padding:5px 10px;
+}
+
+/* ══ SUN EVENTS ══ */
 .sun-events { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
-.sun-event { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:14px; padding:14px; }
-.sun-event-title { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px; }
-.sun-event-time { font-size:18px; font-weight:600; margin-bottom:10px; }
-.score-label { font-size:11px; color:var(--muted); margin-bottom:6px; display:flex; justify-content:space-between; }
-.score-value { font-weight:600; font-size:13px; }
-.score-bar-track { height:6px; border-radius:3px; background:rgba(255,255,255,0.07); overflow:hidden; margin-bottom:8px; }
-.score-bar-fill { height:100%; border-radius:3px; transition:width 1s ease; }
-.score-description { font-size:12px; font-weight:600; }
-.quality-spectacular{color:#ff7b54} .quality-vivid{color:#ffb347} .quality-nice{color:#ffd700} .quality-mild{color:#87ceeb} .quality-poor{color:var(--muted)}
-.bar-spectacular{background:linear-gradient(90deg,#ff7b54,#ff4e50)} .bar-vivid{background:linear-gradient(90deg,#ff9a44,#fc6076)} .bar-nice{background:linear-gradient(90deg,#ffd700,#f9a825)} .bar-mild{background:linear-gradient(90deg,#87ceeb,#5b9bd5)} .bar-poor{background:linear-gradient(90deg,#6b7280,#4b5563)}
-.color-palette { display:flex; gap:3px; margin-top:8px; border-radius:6px; overflow:hidden; height:8px; }
-.palette-swatch { flex:1; border-radius:2px; }
+.sun-event {
+  background:linear-gradient(155deg,rgba(255,255,255,0.042) 0%,rgba(255,255,255,0.014) 100%);
+  border:1px solid var(--border); border-radius:16px; padding:14px;
+  position:relative; overflow:hidden; transition:border-color 0.3s;
+}
+.sun-event::after {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,185,80,0.3),transparent);
+}
+.sun-event-title { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.14em; margin-bottom:7px; font-weight:500; }
+.sun-event-time  { font-size:22px; font-weight:600; margin-bottom:10px; font-family:'Cormorant Garamond',serif; letter-spacing:0.02em; }
+.score-label     { font-size:10px; color:var(--muted); margin-bottom:5px; display:flex; justify-content:space-between; }
+.score-value     { font-weight:700; font-size:12.5px; }
+.score-bar-track { height:5px; border-radius:3px; background:rgba(255,255,255,0.06); overflow:hidden; margin-bottom:8px; }
+.score-bar-fill  { height:100%; border-radius:3px; transition:width 1.3s cubic-bezier(.22,1,.36,1); }
+.score-description { font-size:11px; font-weight:600; letter-spacing:0.02em; }
 
-/* ── Detailed weather ── */
-.weather-detail { background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:14px; padding:14px; margin-top:2px; }
-.weather-detail-title { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px; }
-.weather-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.weather-item { display:flex; align-items:center; gap:8px; }
-.weather-item-icon { font-size:20px; }
-.weather-item-text { font-size:12px; color:var(--muted); }
+.quality-spectacular { color:#ff7040 }
+.quality-vivid       { color:#ffaa38 }
+.quality-nice        { color:#f0cc40 }
+.quality-mild        { color:#70b8e0 }
+.quality-poor        { color:var(--muted) }
+
+.bar-spectacular { background:linear-gradient(90deg,#cc2200,#ff5030,#ff9040) }
+.bar-vivid       { background:linear-gradient(90deg,#e06010,#ff9030,#ffcc40) }
+.bar-nice        { background:linear-gradient(90deg,#e0aa00,#f0cc40) }
+.bar-mild        { background:linear-gradient(90deg,#3888b8,#70b8e0) }
+.bar-poor        { background:linear-gradient(90deg,#303040,#505060) }
+
+.color-palette { display:flex; gap:2px; margin-top:10px; border-radius:8px; overflow:hidden; height:10px; box-shadow:0 1px 6px rgba(0,0,0,0.4); }
+.palette-swatch { flex:1; }
+
+/* ══ WEATHER DETAIL ══ */
+.weather-detail { background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:16px; padding:14px; margin-top:2px; }
+.weather-detail-title { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.13em; margin-bottom:12px; font-weight:500; }
+.weather-grid { display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+.weather-item { display:flex; align-items:center; gap:9px; }
+.weather-item-icon { font-size:22px; flex-shrink:0; }
+.weather-item-text { font-size:11px; color:var(--muted); }
 .weather-item-text strong { display:block; color:var(--text); font-size:14px; font-weight:600; }
-.hourly-strip { display:flex; gap:6px; overflow-x:auto; padding-bottom:6px; margin-top:12px; scrollbar-width:none; }
+.hourly-strip { display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; margin-top:12px; scrollbar-width:none; }
 .hourly-strip::-webkit-scrollbar { display:none; }
-.hourly-item { flex-shrink:0; text-align:center; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:8px 10px; min-width:52px; }
-.hourly-time { font-size:10px; color:var(--muted); margin-bottom:4px; }
-.hourly-icon { font-size:18px; margin-bottom:4px; }
-.hourly-temp { font-size:13px; font-weight:600; }
-.hourly-cloud { font-size:10px; color:var(--muted); }
+.hourly-item {
+  flex-shrink:0; text-align:center;
+  background:rgba(255,255,255,0.03); border:1px solid var(--border);
+  border-radius:12px; padding:9px 10px; min-width:54px;
+  transition:border-color 0.2s;
+}
+.hourly-item:hover { border-color:var(--border-lit); }
+.hourly-time  { font-size:10px; color:var(--muted); margin-bottom:5px; }
+.hourly-icon  { font-size:20px; margin-bottom:4px; line-height:1.1; }
+.hourly-temp  { font-size:13px; font-weight:600; }
+.hourly-cloud { font-size:10px; color:var(--muted); margin-top:2px; }
 
-/* ── Rating popup ── */
-.rating-row { display:flex; align-items:center; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+/* ══ RATING ══ */
+.rating-row { display:flex; align-items:center; justify-content:space-between; margin-top:14px; padding-top:14px; border-top:1px solid var(--border); }
 .rating-label { font-size:12px; color:var(--muted); }
 .rating-stars { display:flex; gap:4px; }
-.rating-star { font-size:22px; cursor:pointer; opacity:0.35; transition:all 0.15s; }
-.rating-star.active { opacity:1; transform:scale(1.15); }
+.rating-star { font-size:22px; cursor:pointer; opacity:0.3; transition:all 0.15s; filter:grayscale(0.4); }
+.rating-star.active { opacity:1; transform:scale(1.18); filter:none; }
 .rating-saved { font-size:11px; color:var(--green); margin-top:4px; display:none; }
 
-/* ── Journal tab ── */
-.journal-empty { text-align:center; padding:48px 20px; color:var(--muted); }
-.journal-empty .je-icon { font-size:48px; display:block; margin-bottom:12px; }
-.journal-entry { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px; margin-bottom:12px; animation:slideUp 0.3s ease both; }
+/* ══ JOURNAL ══ */
+.journal-empty { text-align:center; padding:52px 20px; color:var(--muted); }
+.journal-empty .je-icon { font-size:52px; display:block; margin-bottom:14px; filter:drop-shadow(0 0 12px rgba(240,180,60,0.3)); }
+.journal-entry {
+  background:linear-gradient(145deg,rgba(255,255,255,0.042),rgba(255,255,255,0.016));
+  border:1px solid var(--border); border-radius:18px; padding:16px; margin-bottom:12px;
+  animation:slideUp 0.35s cubic-bezier(.22,1,.36,1) both;
+  box-shadow:0 4px 16px rgba(0,0,0,0.25);
+}
 .journal-entry-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
-.journal-entry-date { font-family:'Playfair Display',serif; font-size:16px; }
-.journal-entry-loc { font-size:12px; color:var(--muted); }
-.journal-entry-type { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; }
-.journal-scores { display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:8px; }
+.journal-entry-date { font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:600; }
+.journal-entry-loc  { font-size:11.5px; color:var(--muted); margin-top:2px; }
+.journal-scores { display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:10px; }
 .journal-score-item { font-size:13px; }
 .journal-score-item span { font-weight:600; }
-.journal-delete { background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; padding:2px 6px; border-radius:6px; }
-.journal-delete:hover { color:var(--rose); background:rgba(212,96,122,0.1); }
+.journal-delete { background:none; border:none; color:var(--muted); font-size:18px; cursor:pointer; padding:2px 6px; border-radius:6px; transition:all 0.2s; }
+.journal-delete:hover { color:var(--rose); background:rgba(200,60,100,0.12); }
 
-/* ── World map tab ── */
-.world-map-header { text-align:center; margin-bottom:16px; }
-.world-map-header p { font-size:13px; color:var(--muted); margin-top:4px; }
-.hotspot-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px; margin-bottom:10px; display:flex; align-items:center; gap:14px; animation:slideUp 0.3s ease both; }
-.hotspot-rank { font-family:'Playfair Display',serif; font-size:24px; font-weight:700; color:var(--gold); min-width:32px; text-align:center; }
-.hotspot-info { flex:1; }
-.hotspot-name { font-size:15px; font-weight:600; margin-bottom:2px; }
-.hotspot-desc { font-size:12px; color:var(--muted); }
+/* ══ WORLD TAB ══ */
+.world-map-header { text-align:center; margin-bottom:18px; }
+.world-map-header p { font-size:13px; color:var(--muted); margin-top:5px; }
+.hotspot-card {
+  background:linear-gradient(135deg,rgba(255,255,255,0.042),rgba(255,255,255,0.014));
+  border:1px solid var(--border); border-radius:18px;
+  padding:15px 16px; margin-bottom:10px;
+  display:flex; align-items:center; gap:14px;
+  animation:slideUp 0.4s cubic-bezier(.22,1,.36,1) both;
+  backdrop-filter:blur(16px);
+  box-shadow:0 4px 20px rgba(0,0,0,0.28);
+  transition:border-color 0.2s;
+}
+.hotspot-rank {
+  font-family:'Cormorant Garamond',serif; font-size:27px; font-weight:600;
+  color:var(--gold); min-width:36px; text-align:center; line-height:1;
+}
+.hotspot-info  { flex:1; }
+.hotspot-name  { font-size:15px; font-weight:600; margin-bottom:3px; }
+.hotspot-desc  { font-size:12px; color:var(--muted); }
 .hotspot-score { text-align:center; }
-.hotspot-score-num { font-size:22px; font-weight:700; }
-.hotspot-score-label { font-size:10px; color:var(--muted); text-transform:uppercase; }
+.hotspot-score-num   { font-size:26px; font-weight:700; font-family:'Cormorant Garamond',serif; line-height:1; }
+.hotspot-score-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.07em; }
 
-/* ── Notification banner ── */
-.notif-banner { display:flex; align-items:center; gap:10px; background:rgba(92,184,92,0.08); border:1px solid rgba(92,184,92,0.25); border-radius:14px; padding:12px 16px; margin-bottom:14px; }
-.notif-banner p { flex:1; font-size:13px; color:var(--muted); line-height:1.5; }
-.notif-banner strong { color:var(--green); display:block; font-size:14px; margin-bottom:2px; }
-.notif-toggle { background:rgba(92,184,92,0.15); border:1px solid rgba(92,184,92,0.3); border-radius:8px; color:var(--green); font-size:12px; padding:6px 12px; cursor:pointer; font-family:'Heebo',sans-serif; white-space:nowrap; }
-.notif-toggle.off { background:rgba(255,255,255,0.05); border-color:var(--border); color:var(--muted); }
+/* ══ NOTIFICATIONS ══ */
+.notif-banner {
+  background:rgba(50,200,80,0.07); border:1px solid rgba(50,200,80,0.2);
+  border-radius:15px; padding:14px 16px; margin-bottom:14px;
+}
+.notif-banner-title { color:var(--green); font-size:13.5px; font-weight:600; margin-bottom:10px; }
+.notif-banner-row   { display:flex; align-items:center; gap:10px; margin-bottom:7px; }
+.notif-banner-row:last-child { margin-bottom:0; }
+.notif-banner-label { flex:1; font-size:13px; color:var(--muted); }
+.notif-toggle {
+  background:rgba(50,200,80,0.14); border:1px solid rgba(50,200,80,0.28);
+  border-radius:8px; color:var(--green); font-size:12px; font-weight:600;
+  padding:6px 14px; cursor:pointer; font-family:'Heebo',sans-serif;
+  white-space:nowrap; min-width:68px; text-align:center; transition:all 0.2s;
+}
+.notif-toggle.off { background:rgba(255,255,255,0.04); border-color:var(--border); color:var(--muted); }
 
-/* ── Loading / Error ── */
-.loading { text-align:center; padding:60px 20px; color:var(--muted); }
-.loading-spinner { font-size:40px; display:block; margin-bottom:16px; animation:spin 2s linear infinite; }
+/* ══ LOADING / ERROR ══ */
+.loading { text-align:center; padding:64px 20px; color:var(--muted); }
+.loading-spinner { font-size:44px; display:block; margin-bottom:18px; animation:spin 2s linear infinite; }
 @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-.error-box { background:rgba(212,96,122,0.1); border:1px solid rgba(212,96,122,0.3); border-radius:16px; padding:24px; text-align:center; margin:20px 0; }
-.error-box h3 { color:var(--rose); margin-bottom:8px; font-size:16px; }
-.error-box p { font-size:13px; color:var(--muted); line-height:1.6; }
-.btn-primary { display:block; width:100%; margin-top:16px; background:linear-gradient(135deg,var(--rose),var(--gold)); border:none; border-radius:12px; color:white; font-family:'Heebo',sans-serif; font-size:15px; font-weight:600; padding:14px; cursor:pointer; }
+.error-box {
+  background:rgba(200,60,100,0.09); border:1px solid rgba(200,60,100,0.28);
+  border-radius:18px; padding:26px; text-align:center; margin:20px 0;
+}
+.error-box h3 { color:var(--rose); margin-bottom:9px; font-size:16px; }
+.error-box p  { font-size:13px; color:var(--muted); line-height:1.65; }
+.btn-primary  {
+  display:block; width:100%; margin-top:16px;
+  background:linear-gradient(135deg,var(--rose),var(--gold));
+  border:none; border-radius:12px; color:white;
+  font-family:'Heebo',sans-serif; font-size:15px; font-weight:600;
+  padding:14px; cursor:pointer; transition:opacity 0.2s;
+}
+.btn-primary:hover { opacity:0.88; }
 
-/* ── Share / Footer ── */
-.share-section { margin-top:20px; text-align:center; }
-.share-btn { display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.06); border:1px solid var(--border); border-radius:12px; color:var(--text); font-family:'Heebo',sans-serif; font-size:14px; padding:12px 24px; cursor:pointer; transition:all 0.2s; }
-.share-btn:hover { background:rgba(255,255,255,0.1); }
-footer { text-align:center; margin-top:32px; font-size:11px; color:rgba(240,232,216,0.25); line-height:1.8; }
+/* ══ SHARE / FOOTER ══ */
+.share-section { margin-top:24px; text-align:center; }
+.share-btn {
+  display:inline-flex; align-items:center; gap:9px;
+  background:linear-gradient(135deg,rgba(240,180,60,0.14),rgba(200,60,100,0.09));
+  border:1px solid rgba(240,180,60,0.26); border-radius:14px;
+  color:var(--gold2); font-family:'Heebo',sans-serif; font-size:14px; font-weight:500;
+  padding:13px 30px; cursor:pointer; transition:all 0.25s; letter-spacing:0.03em;
+}
+.share-btn:hover {
+  background:linear-gradient(135deg,rgba(240,180,60,0.22),rgba(200,60,100,0.15));
+  box-shadow:0 4px 22px rgba(240,165,50,0.18); transform:translateY(-1px);
+}
+footer { text-align:center; margin-top:36px; font-size:11px; color:rgba(244,232,212,0.18); line-height:2.1; letter-spacing:0.05em; }
 
-/* ── Install banner ── */
-.install-banner { display:none; align-items:center; gap:12px; background:rgba(232,184,109,0.08); border:1px solid rgba(232,184,109,0.2); border-radius:14px; padding:14px 16px; margin-bottom:16px; }
+/* ══ INSTALL BANNER ══ */
+.install-banner { display:none; align-items:center; gap:12px; background:rgba(240,180,60,0.08); border:1px solid rgba(240,180,60,0.2); border-radius:14px; padding:14px 16px; margin-bottom:16px; }
 .install-banner.visible { display:flex; }
 .install-banner p { flex:1; font-size:13px; color:var(--muted); line-height:1.5; }
 .install-banner strong { color:var(--gold); display:block; font-size:14px; margin-bottom:2px; }
-.install-dismiss { background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer; padding:4px; }
+.install-dismiss { background:none; border:none; color:var(--muted); font-size:22px; cursor:pointer; padding:4px; transition:color 0.2s; }
+.install-dismiss:hover { color:var(--text); }
 </style>
 </head>
 <body>
 <div class="container">
   <header>
-    <span class="logo-icon">🌅</span>
+    <div class="logo-wrap">
+      <div class="logo-glow"></div>
+      <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="skyG" cx="50%" cy="65%" r="75%">
+            <stop offset="0%" stop-color="#2a0840"/>
+            <stop offset="55%" stop-color="#0e0428"/>
+            <stop offset="100%" stop-color="#06020e"/>
+          </radialGradient>
+          <radialGradient id="sunG" cx="50%" cy="40%" r="60%">
+            <stop offset="0%"   stop-color="#fff6b0"/>
+            <stop offset="35%"  stop-color="#ffd040"/>
+            <stop offset="75%"  stop-color="#ff8c18"/>
+            <stop offset="100%" stop-color="#ff5500"/>
+          </radialGradient>
+          <radialGradient id="horizG" cx="50%" cy="0%" r="100%">
+            <stop offset="0%"   stop-color="#ff4010" stop-opacity="0.95"/>
+            <stop offset="45%"  stop-color="#ff7820" stop-opacity="0.65"/>
+            <stop offset="100%" stop-color="#cc2050" stop-opacity="0.15"/>
+          </radialGradient>
+          <linearGradient id="seaG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#162450"/>
+            <stop offset="100%" stop-color="#060c1a"/>
+          </linearGradient>
+          <radialGradient id="glowG" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stop-color="#ffc030" stop-opacity="0.55"/>
+            <stop offset="100%" stop-color="#ff5500" stop-opacity="0"/>
+          </radialGradient>
+          <filter id="sf"><feGaussianBlur stdDeviation="1.5"/></filter>
+          <clipPath id="rc"><rect width="100" height="100" rx="22"/></clipPath>
+        </defs>
+        <g clip-path="url(#rc)">
+          <rect width="100" height="100" fill="url(#skyG)"/>
+          <ellipse cx="50" cy="57" rx="58" ry="24" fill="url(#horizG)"/>
+          <circle  cx="50" cy="46" r="32"   fill="url(#glowG)" filter="url(#sf)"/>
+          <g opacity="0.5" filter="url(#sf)">
+            <line x1="50" y1="14" x2="50" y2="8"  stroke="#ffd040" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="50" y1="14" x2="50" y2="8"  stroke="#ffd040" stroke-width="1.8" stroke-linecap="round" transform="rotate(40  50 46)"/>
+            <line x1="50" y1="14" x2="50" y2="8"  stroke="#ffd040" stroke-width="1.8" stroke-linecap="round" transform="rotate(-40 50 46)"/>
+            <line x1="50" y1="14" x2="50" y2="8"  stroke="#ffd040" stroke-width="1.6" stroke-linecap="round" transform="rotate(80  50 46)"/>
+            <line x1="50" y1="14" x2="50" y2="8"  stroke="#ffd040" stroke-width="1.6" stroke-linecap="round" transform="rotate(-80 50 46)"/>
+          </g>
+          <circle cx="50" cy="46" r="16" fill="url(#sunG)"/>
+          <circle cx="50" cy="46" r="10" fill="#fff8c0" opacity="0.35"/>
+          <rect x="2" y="61" width="96" height="2" fill="#ff8030" opacity="0.65"/>
+          <rect x="2" y="63" width="96" height="35" fill="url(#seaG)"/>
+          <ellipse cx="50" cy="72" rx="20" ry="4" fill="#ff7020" opacity="0.28"/>
+          <ellipse cx="50" cy="80" rx="11" ry="2.2" fill="#ff5010" opacity="0.18"/>
+          <rect x="2" y="90" width="96" height="8" fill="#06020e" opacity="0.75"/>
+          <circle cx="17" cy="18" r="1.1" fill="white" opacity="0.90"/>
+          <circle cx="32" cy="10" r="0.8" fill="white" opacity="0.70"/>
+          <circle cx="72" cy="14" r="1.3" fill="white" opacity="0.85"/>
+          <circle cx="85" cy="22" r="0.9" fill="white" opacity="0.65"/>
+          <circle cx="60" cy="8"  r="0.8" fill="#ffe0a0" opacity="0.80"/>
+        </g>
+      </svg>
+    </div>
     <h1>שחקי אור</h1>
     <p class="tagline">תחזית צבעוניות שקיעות וזריחות</p>
+    <div class="header-line"></div>
   </header>
 
   <div class="install-banner" id="installBanner">
@@ -216,11 +452,15 @@ footer { text-align:center; margin-top:32px; font-size:11px; color:rgba(240,232,
 
   <!-- Notification banner -->
   <div class="notif-banner" id="notifBanner">
-    <div>
-      <strong>🔔 התראות שקיעה</strong>
-      <p>קבל התראה שעה לפני שקיעה/זריחה מדהימה (ציון 8+)</p>
+    <div class="notif-banner-title">🔔 התראות (ציון 8+)</div>
+    <div class="notif-banner-row">
+      <span class="notif-banner-label">🌅 שקיעה — שעה לפני</span>
+      <button class="notif-toggle off" id="notifBtnSunset" onclick="toggleNotif('sunset')">הפעל</button>
     </div>
-    <button class="notif-toggle off" id="notifBtn" onclick="toggleNotifications()">הפעל</button>
+    <div class="notif-banner-row">
+      <span class="notif-banner-label">🌄 זריחה — שעה לפני</span>
+      <button class="notif-toggle off" id="notifBtnSunrise" onclick="toggleNotif('sunrise')">הפעל</button>
+    </div>
   </div>
 
   <!-- Tab content -->
@@ -254,7 +494,8 @@ footer { text-align:center; margin-top:32px; font-size:11px; color:rgba(240,232,
 const DAYS_HE = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
 const MONTHS_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 let userLat, userLon, currentWeatherData, currentSunData, currentCityName;
-let notifEnabled = false;
+let notifSunset = false;
+let notifSunrise = false;
 let notifTimers = [];
 let worldLoaded = false;
 
@@ -279,11 +520,16 @@ function init() {
   if (/Mobi|Android/i.test(navigator.userAgent) && !window.matchMedia('(display-mode: standalone)').matches) {
     document.getElementById('installBanner').classList.add('visible');
   }
-  // Check saved notification pref
-  if (localStorage.getItem('shakey_notif') === '1') {
-    notifEnabled = true;
-    document.getElementById('notifBtn').textContent = 'פעיל ✓';
-    document.getElementById('notifBtn').classList.remove('off');
+  // Restore saved notification prefs
+  if (localStorage.getItem('shakey_notif_sunset') === '1') {
+    notifSunset = true;
+    document.getElementById('notifBtnSunset').textContent = 'פעיל ✓';
+    document.getElementById('notifBtnSunset').classList.remove('off');
+  }
+  if (localStorage.getItem('shakey_notif_sunrise') === '1') {
+    notifSunrise = true;
+    document.getElementById('notifBtnSunrise').textContent = 'פעיל ✓';
+    document.getElementById('notifBtnSunrise').classList.remove('off');
   }
   // Always try GPS first — if it fails, fall back to last searched city
   loadData();
@@ -391,7 +637,7 @@ async function fetchAndRender() {
   worldLoaded = false; // reset so world tab refreshes
   renderCards(weatherData, sunData, aqData, elevData);
   document.getElementById('shareSection').style.display='block';
-  if (notifEnabled) scheduleNotifications(sunData, weatherData);
+  if (notifSunset || notifSunrise) scheduleNotifications(sunData, weatherData);
 }
 
 // ── Weather API ──
@@ -670,7 +916,7 @@ function renderCards(weatherData, sunData, aqData=null, elevData=null) {
     // savedRatingHtml handled inline in rating-saved div below
 
     html += `
-    <div class="day-card" style="animation-delay:${i*0.12}s">
+    <div class="day-card ${i===0?'today':''}" style="animation-delay:${i*0.12}s">
       <div class="day-header">
         <div><div class="day-name">${dayName}</div><div class="day-date">${dateStrDisplay}</div></div>
         <div class="weather-summary">
@@ -788,13 +1034,28 @@ function deleteJournalEntry(id) {
 }
 
 // ── World map ──
+// 20 candidates — we fetch all, rank by score, show top results
 const HOTSPOTS = [
-  {name:'סנטוריני, יוון', desc:'שקיעות אגדיות מעל הקלדרה', lat:36.39, lon:25.46, emoji:'🇬🇷'},
-  {name:'מאווי, הוואי', desc:'הר האלאקלה מעל העננים', lat:20.80, lon:-156.33, emoji:'🌺'},
-  {name:'אנגקור ואט, קמבודיה', desc:'זריחות מהממות מעל המקדשים', lat:13.41, lon:103.86, emoji:'🇰🇭'},
-  {name:'פטגוניה, ארגנטינה', desc:'שמיים דרמטיים ופתוחים', lat:-50.0, lon:-73.0, emoji:'🇦🇷'},
-  {name:'שרם א-שייח, מצרים', desc:'שקיעות מדבריות על הים האדום', lat:27.91, lon:34.33, emoji:'🇪🇬'},
-  {name:'קייפ טאון, ד. אפריקה', desc:'הר שולחן ושקיעות אוקיאנוס', lat:-33.92, lon:18.42, emoji:'🇿🇦'},
+  {name:'סנטוריני, יוון',       desc:'שקיעות מעל הקלדרה האגאית',        lat:36.39,  lon:25.46,   emoji:'🇬🇷'},
+  {name:'מאווי, הוואי',         desc:'הר האלאקלה מעל העננים',            lat:20.80,  lon:-156.33, emoji:'🌺'},
+  {name:'אנגקור ואט, קמבודיה', desc:'זריחות מהממות מעל המקדשים',        lat:13.41,  lon:103.86,  emoji:'🇰🇭'},
+  {name:'שרם א-שייח, מצרים',   desc:'שקיעות מדבריות על הים האדום',      lat:27.91,  lon:34.33,   emoji:'🇪🇬'},
+  {name:'קייפ טאון, ד. אפריקה',desc:'הר שולחן ושקיעות אוקיאנוס',        lat:-33.92, lon:18.42,   emoji:'🇿🇦'},
+  {name:'דובאי, איחוד האמירויות',desc:'שקיעות מדבר ארביות זוהרות',      lat:25.20,  lon:55.27,   emoji:'🇦🇪'},
+  {name:'ריו דה ז'נרו, ברזיל', desc:'שמש שוקעת מעל הסוכר הלוף',        lat:-22.90, lon:-43.17,  emoji:'🇧🇷'},
+  {name:'אנטלוף, מרוקו',        desc:'שקיעות ורודות מעל הסהרה',          lat:31.00,  lon:-4.00,   emoji:'🇲🇦'},
+  {name:'בלי, אינדונזיה',       desc:'שקיעות מקדש על הים',               lat:-8.34,  lon:115.09,  emoji:'🇮🇩'},
+  {name:'קיוטו, יפן',           desc:'שקיעות עדינות מעל גני הבמבוק',     lat:35.01,  lon:135.76,  emoji:'🇯🇵'},
+  {name:'מוניך, גרמניה',        desc:'אלפים ורודים בשעת השקיעה',         lat:48.14,  lon:11.58,   emoji:'🇩🇪'},
+  {name:'אייסלנד',              desc:'שמיים קסומים ואורות צפוניים',       lat:64.13,  lon:-21.82,  emoji:'🇮🇸'},
+  {name:'פטגוניה, ארגנטינה',   desc:'שמיים פתוחים ודרמטיים',             lat:-50.0,  lon:-73.0,   emoji:'🇦🇷'},
+  {name:'נמיביה, מדבר',        desc:'חולות אדומים בשקיעה',               lat:-23.00, lon:17.00,   emoji:'🇳🇦'},
+  {name:'מלדיביים',             desc:'שקיעות מעל אוקיינוס הודי',          lat:4.17,   lon:73.51,   emoji:'🇲🇻'},
+  {name:'ואדי ראם, ירדן',       desc:'מדבר כמאדים בשעת שקיעה',           lat:29.57,  lon:35.42,   emoji:'🇯🇴'},
+  {name:'פלורנץ, איטליה',       desc:'שקיעות מזהבות מעל הארנו',           lat:43.77,  lon:11.25,   emoji:'🇮🇹'},
+  {name:'קולורדו, ארה"ב',       desc:'הרי הרוקי בצבעי שקיעה',            lat:39.55,  lon:-105.78, emoji:'🇺🇸'},
+  {name:'דרום תאילנד',          desc:'שקיעות מעל ביי קראבי',              lat:8.08,   lon:98.91,   emoji:'🇹🇭'},
+  {name:'אוסלו, נורווגיה',      desc:'פיורדים בשמש חצות',                 lat:59.91,  lon:10.75,   emoji:'🇳🇴'},
 ];
 
 async function renderWorld() {
@@ -825,20 +1086,34 @@ async function renderWorld() {
   }));
 
   results.sort((a,b) => b.score-a.score);
+  const topResults = results.slice(0, 8);
+  const hotCount = results.filter(r => r.score >= 8).length;
+  const bestScore = results[0]?.score ?? 0;
+
+  let headerNote = '';
+  if (hotCount === 0) headerNote = 'היום אין יעדים עם צבעוניות גבוהה במיוחד ☁️';
+  else if (hotCount === 1) headerNote = `🔥 יעד אחד מדהים היום!`;
+  else headerNote = `🔥 ${hotCount} יעדים עם צבעוניות גבוהה היום!`;
 
   el.innerHTML = `
     <div class="world-map-header">
       <h2 style="font-family:'Playfair Display',serif;font-size:20px">🗺️ יעדי שקיעות מובילים</h2>
-      <p>דירוג לפי תחזית צבעוניות להיום</p>
+      <p>${headerNote}</p>
+      <p style="margin-top:4px;font-size:11px;color:rgba(240,232,216,0.3)">מתוך ${results.length} יעדים — מציג 8 הטובים</p>
     </div>` +
-    results.map((spot,i) => {
+    topResults.map((spot,i) => {
       const q = getQualityInfo(spot.score);
-      return `<div class="hotspot-card" style="animation-delay:${i*0.08}s">
-        <div class="hotspot-rank">${i+1}</div>
+      const isHot = spot.score >= 8;
+      const isBest = i === 0;
+      const borderStyle = isBest ? 'border-color:rgba(232,184,109,0.5)' : isHot ? 'border-color:rgba(255,122,84,0.4)' : '';
+      return `<div class="hotspot-card" style="animation-delay:${i*0.08}s;${borderStyle}">
+        <div class="hotspot-rank" style="${isBest?'color:var(--gold)':isHot?'color:#ff9a44':''}">
+          ${isBest ? '🏆' : i+1}
+        </div>
         <div class="hotspot-info">
-          <div class="hotspot-name">${spot.emoji} ${spot.name}</div>
+          <div class="hotspot-name">${spot.emoji} ${spot.name}${isHot?' <span style="font-size:10px;background:rgba(255,122,84,0.2);color:#ff9a44;border-radius:4px;padding:1px 5px;margin-right:4px">חם!</span>':''}</div>
           <div class="hotspot-desc">${spot.desc}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">שקיעה (שעון מקומי): ${spot.sunset}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">🌇 שקיעה: ${spot.sunset}</div>
         </div>
         <div class="hotspot-score">
           <div class="hotspot-score-num quality-${q.cls}">${spot.score}</div>
@@ -850,23 +1125,30 @@ async function renderWorld() {
 }
 
 // ── Notifications ──
-async function toggleNotifications() {
+async function toggleNotif(type) {
   if (!('Notification' in window)) { alert('דפדפן זה אינו תומך בהתראות'); return; }
-  if (!notifEnabled) {
+  const isSunset = type === 'sunset';
+  const btnId = isSunset ? 'notifBtnSunset' : 'notifBtnSunrise';
+  const storageKey = isSunset ? 'shakey_notif_sunset' : 'shakey_notif_sunrise';
+  const isEnabled = isSunset ? notifSunset : notifSunrise;
+  const btn = document.getElementById(btnId);
+
+  if (!isEnabled) {
     const perm = await Notification.requestPermission();
-    if (perm !== 'granted') { alert('נא לאפשר התראות בהגדרות הדפדפן'); return; }
-    notifEnabled = true;
-    localStorage.setItem('shakey_notif','1');
-    document.getElementById('notifBtn').textContent='פעיל ✓';
-    document.getElementById('notifBtn').classList.remove('off');
-    if (currentSunData && currentWeatherData) scheduleNotifications(currentSunData, currentWeatherData);
+    if (perm !== 'granted') { alert('נא לאפשר התראות בהגדרות'); return; }
+    if (isSunset) notifSunset = true; else notifSunrise = true;
+    localStorage.setItem(storageKey, '1');
+    btn.textContent = 'פעיל ✓';
+    btn.classList.remove('off');
   } else {
-    notifEnabled = false;
-    localStorage.removeItem('shakey_notif');
-    notifTimers.forEach(clearTimeout); notifTimers=[];
-    document.getElementById('notifBtn').textContent='הפעל';
-    document.getElementById('notifBtn').classList.add('off');
+    if (isSunset) notifSunset = false; else notifSunrise = false;
+    localStorage.removeItem(storageKey);
+    btn.textContent = 'הפעל';
+    btn.classList.add('off');
   }
+  notifTimers.forEach(clearTimeout); notifTimers=[];
+  if ((notifSunset || notifSunrise) && currentSunData && currentWeatherData)
+    scheduleNotifications(currentSunData, currentWeatherData);
 }
 
 function scheduleNotifications(sunData, weatherData) {
@@ -875,14 +1157,17 @@ function scheduleNotifications(sunData, weatherData) {
   sunData.forEach((day,i) => {
     if (!day) return;
     const dateStr = new Date(Date.now()+i*86400000).toISOString().split('T')[0];
-
     [
-      {utc: day.sunrise, label:'זריחה', isSunset:false},
-      {utc: day.sunset,  label:'שקיעה', isSunset:true}
-    ].forEach(({utc, label, isSunset}) => {
+      {utc: day.sunrise, label:'זריחה', isSunrise:true},
+      {utc: day.sunset,  label:'שקיעה', isSunrise:false}
+    ].forEach(({utc, label, isSunrise}) => {
       if (!utc) return;
+      // Skip if this type is disabled
+      if (isSunrise && !notifSunrise) return;
+      if (!isSunrise && !notifSunset) return;
+
       const eventTime = new Date(utc).getTime();
-      const notifTime = eventTime - 60*60*1000; // 1hr before
+      const notifTime = eventTime - 60*60*1000;
       if (notifTime <= now) return;
 
       const hour = new Date(utc).getHours();
@@ -891,12 +1176,12 @@ function scheduleNotifications(sunData, weatherData) {
         const idx = getHourlyIndex(weatherData, dateStr, hour);
         score = calcColorScore(weatherData.hourly.cloudcover[idx]??40, weatherData.hourly.relativehumidity_2m[idx]??55, weatherData.hourly.precipitation[idx]??0, weatherData.hourly.windspeed_10m[idx]??15);
       }
-
       if (score >= 8) {
+        const emoji = isSunrise ? '🌄' : '🌅';
         const delay = notifTime - now;
         const t = setTimeout(() => {
-          new Notification(`🌅 שחקי אור — ${label} מדהימה בעוד שעה!`, {
-            body: `ציון צבעוניות: ${score}/10 | ${getQualityInfo(score).label} | צא לצפות! ${formatLocalTime(utc)}`,
+          new Notification(`${emoji} שחקי אור — ${label} מדהימה בעוד שעה!`, {
+            body: `ציון: ${score}/10 | ${getQualityInfo(score).label} | ${formatLocalTime(utc)}`,
             icon: 'icon-192.png'
           });
         }, delay);
