@@ -9,10 +9,10 @@
 <title>שחקי אור — תחזית שקיעות וזריחות</title>
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Heebo:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Heebo:wght@300;400;500;600&display=swap');
-
 :root {
   --bg: #07040f;
   --surface: rgba(255,255,255,0.038);
@@ -916,7 +916,7 @@ function renderCards(weatherData, sunData, aqData=null, elevData=null) {
     // savedRatingHtml handled inline in rating-saved div below
 
     html += `
-    <div class="day-card ${i===0?'today':''}" style="animation-delay:${i*0.12}s">
+    <div class="day-card" style="animation-delay:${i*0.12}s" data-today="${i===0}">
       <div class="day-header">
         <div><div class="day-name">${dayName}</div><div class="day-date">${dateStrDisplay}</div></div>
         <div class="weather-summary">
@@ -976,6 +976,9 @@ function renderCards(weatherData, sunData, aqData=null, elevData=null) {
 
   html += '</div>';
   document.getElementById('content').innerHTML = html;
+  // Apply today styling via JS (avoids template literal escaping issues)
+  const todayCard = document.querySelector('[data-today="true"]');
+  if (todayCard) todayCard.style.cssText += ';border-color:rgba(240,165,50,0.22);box-shadow:0 6px 28px rgba(0,0,0,0.32),0 0 0 1px rgba(240,165,50,0.1),inset 0 1px 0 rgba(255,255,255,0.07)';
 }
 
 // ── Rating / Journal ──
@@ -1042,7 +1045,7 @@ const HOTSPOTS = [
   {name:'שרם א-שייח, מצרים',   desc:'שקיעות מדבריות על הים האדום',      lat:27.91,  lon:34.33,   emoji:'🇪🇬'},
   {name:'קייפ טאון, ד. אפריקה',desc:'הר שולחן ושקיעות אוקיאנוס',        lat:-33.92, lon:18.42,   emoji:'🇿🇦'},
   {name:'דובאי, איחוד האמירויות',desc:'שקיעות מדבר ארביות זוהרות',      lat:25.20,  lon:55.27,   emoji:'🇦🇪'},
-  {name:'ריו דה ז'נרו, ברזיל', desc:'שמש שוקעת מעל הסוכר הלוף',        lat:-22.90, lon:-43.17,  emoji:'🇧🇷'},
+  {name:'ריו דה ז׳נרו, ברזיל', desc:'שמש שוקעת מעל הסוכר הלוף',        lat:-22.90, lon:-43.17,  emoji:'🇧🇷'},
   {name:'אנטלוף, מרוקו',        desc:'שקיעות ורודות מעל הסהרה',          lat:31.00,  lon:-4.00,   emoji:'🇲🇦'},
   {name:'בלי, אינדונזיה',       desc:'שקיעות מקדש על הים',               lat:-8.34,  lon:115.09,  emoji:'🇮🇩'},
   {name:'קיוטו, יפן',           desc:'שקיעות עדינות מעל גני הבמבוק',     lat:35.01,  lon:135.76,  emoji:'🇯🇵'},
